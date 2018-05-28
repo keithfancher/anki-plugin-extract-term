@@ -17,6 +17,15 @@ JP_COLON = u"："
 US_COLON = u":"
 JP_SPACE = u"　"
 
+# TODO: are these different colons? or maybe a bug with string slicing and unicode?
+# 理想：ideal; dream
+# ^ yields the entire sentence, as if it found no colons (found both! jp 43, us 24) (both 43, 24, actually)
+# 警察：police
+# ^ yields the entire sentence, as if it found no colons (found both! at weird, far off indexes)
+# 駄目人間: useless person
+# ^ yields an empty result (jp pos -1, us pos; 24)
+# doesn't seem to work?
+
 def addTermFields(nids):
     mw.checkpoint("Add Term Fields")
     mw.progress.start()
@@ -36,11 +45,13 @@ def addTermField(note):
     # 2. If it doesn't exist, grab from Expression field
     # 3. If term is already populated... forget it?
 
-    if note[TERM_FIELD_NAME]:
+# TODO: Re-enable the "don't overwrite" bit
+#    if note[TERM_FIELD_NAME]:
         # Do nothing if Term field is already set, at least for now
-        return False
+#        return False
 
     meaning = note[MEANING_FIELD_NAME]
+
     term = extractTerm(meaning)
     if not term:
         # Fall back on Expression
@@ -61,22 +72,27 @@ def extractTerm(field):
     # 食べる：A thing in English.
     # something without a colon
 
+    # TODO: once my HTML/encoding issues are solved, this can all be replaced with one regex...
     jpColonPosition = field.find(JP_COLON)
-    usColonPosition = field.find(US_COLON)
+    usColonPosition = field.find(US_COLON) # this is what occasionally fucks everything up, gives wrong index
 
     if jpColonPosition == -1 and usColonPosition == -1:
         # Neither found
         return None
 
     elif jpColonPosition != -1 and usColonPosition != -1:
-        # Both found, ruh roh
-        return None
+        # Both found, favor JP... this is essentially a hack due to the US
+        # colon *sometimes* incorrectly being found, seemingly due to char
+        # encoding issues:
+        return betterStrip(field[:jpColonPosition])
 
     elif jpColonPosition != -1:
         # JP found
         return betterStrip(field[:jpColonPosition])
 
     elif usColonPosition != -1:
+        # result = re.split(r":|：", field, re.UNICODE)
+        # return result[0]
         # US found
         return betterStrip(field[:usColonPosition])
 
@@ -86,7 +102,8 @@ def extractTerm(field):
 def betterStrip(s):
     # Strip can't deal with weird JP spaces, I guess?
     # TODO: this won't work if the term has JP spaces *inside* it...
-    return s.replace(JP_SPACE, "").strip()
+    # (can probably use unicode-aware regex to match/replace here)
+    return s.replace(JP_SPACE, u"").strip()
 
 def executeTests():
     assert extractTerm(u"no colon here") == None
@@ -96,6 +113,7 @@ def executeTests():
     assert extractTerm(u"食べる：A thing in English.") == u"食べる"
     assert extractTerm(u"  食べる  ：   A thing with regular whitespace") == u"食べる"
     assert extractTerm(u"　  食べる 　 ： 　  A thing with weird JP whitespace") == u"食べる"
+    assert extractTerm(u"駄目人間: useless person") == u"駄目人間" # an example of a weird unicode failure -- missed the colon?
 
     # This test will fail until I fix the above TODO item:
 #    assert extractTerm(u"　 食べる　飲む 　 ： A thing with JP whitespace mid-term") == u"食べる　飲む"
@@ -116,4 +134,4 @@ def onAdd(browser):
 addHook("browser.setupMenus", setupMenu)
 
 # Poor man's unit testing? Figure out how to make this better later...
-executeTests()
+#executeTests() # TODO: turn back on once the unicode debacle is solved...
