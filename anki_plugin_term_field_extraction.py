@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 # A simple plugin that attempts to extract the actual term being defined from a
-# Jalup-style definition field. In other words, if the meaning is defined as:
+# Jalup-style definition field. In other words, if the `Meaning` is defined as:
 #
 #    食べる：to eat!
 #
 # ...then this will extract the 「食べる」portion and plug it into a separate
-# field, here called "Term". This makes it much easier to reason about these
-# cards programatically, find dupes, etc.
+# field, here called `Term`. This makes it much easier to reason about these
+# cards programatically, find dupes, etc. (Note that the original `Meaning`
+# field of the card is left unchaged.)
 
 from anki.hooks import addHook
 from aqt import mw             # main window object (mw) from aqt
@@ -59,7 +60,8 @@ def addTermField(note):
     # 2. If it doesn't exist, grab from Expression field
     # 3. If term is already populated... forget it?
 
-# TODO: Re-enable the "don't overwrite" bit, probably
+    # TODO: Re-enable the "don't overwrite" bit, probably? Leaving it out is
+    # useful for now, so I can re-update already-updated cards while testing.
 #    if note[TERM_FIELD_NAME]:
         # Do nothing if Term field is already set, at least for now
 #        return False
@@ -124,5 +126,6 @@ def onAdd(browser):
 # cards rather than the entire collection
 addHook("browser.setupMenus", setupMenu)
 
-# Poor man's unit testing? Figure out how to make this better later...
+# Poor man's unit testing? If the assertions don't pass, this will crash/burn.
+# Minimal, but works well enough for this.
 executeTests()
