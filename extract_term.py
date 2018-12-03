@@ -23,6 +23,8 @@ EXPRESSION_FIELD_NAME = u"Expression"
 MEANING_FIELD_NAME = u"Meaning"
 JP_SPACE = u"　"
 COLON_REGEX = ur":|：" # Note the unicode and regex combo prefix
+# TODO: temporarily allowing semicolons here too, since The One Deck uses them in that way... maybe leave in permanently?
+#COLON_REGEX = ur":|：|;|；" # Note the unicode and regex combo prefix
 
 # Stolen from: https://stackoverflow.com/questions/753052/strip-html-from-strings-in-python
 # Need to remove HTML elements from input to properly extract the term from
